@@ -3,14 +3,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const tableBody = document.querySelector("#table-body")
     const form = document.querySelector("#dog-form")
     
-    fetch(url)
-    .then(res => res.json())
-    .then(dogsData => postDogs(dogsData))
+    //create hidden Id field for the form
+    let hiddenId = document.createElement("input")
+    hiddenId.setAttribute("type", "hidden")
+    hiddenId.setAttribute("value", "")
+    form.append(hiddenId)
 
-    function postDogs(dogsData){
-        dogsData.forEach(dog => addDog(dog))
+    //function to populate table with dog data
+    function fetchDogData(){
+        fetch(url)
+        .then(res => res.json())
+        .then(dogsData => postDogs(dogsData))
     }
 
+
+    fetchDogData()
+
+    //function to iterate through dog Data
+    function postDogs(dogsData){
+        dogsData.forEach(dog => {
+            addDog(dog)
+            
+        })
+    }
+    //function to add each dog to table
     function addDog(dog){
         let dogRow = document.createElement("tr")
 
@@ -24,21 +40,26 @@ document.addEventListener('DOMContentLoaded', () => {
         let btn = document.createElement("button")
         btn.innerText = "Edit"
         tdEdit.append(btn)
-    
+        
         dogRow.append(tdName, tdBreed, tdSex, tdEdit)
         tableBody.append(dogRow)
-
+        
+        //click on edit button to populate form
         btn.addEventListener("click", ()=> {
             form.children[0].value = dog.name
             form.children[1].value = dog.breed
             form.children[2].value = dog.sex
+            form.children[4].value = dog.id
+            debugger;
         })
-    }    
+    }
 
+    //submit form and update the database with edited values and repopulate form
     form.addEventListener("submit", () => {
         event.preventDefault()
+            
         config = {
-            method: "PATCH",
+             method: "PATCH",
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
@@ -49,11 +70,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 sex: event.target[2].value
             })
         }
-        fetch(url+`${dog.id}`, config)
+        fetch(url+`${parseInt(event.target[4].value)}`, config)
         .then(res => res.json())
-        .then(updatedDog => {
-            dog = updatedDog
+        .then(dog => {
+            tableBody.innerHTML = ""
+            fetchDogData()
+            form.reset();
         })
     })
-    
 })
+    
